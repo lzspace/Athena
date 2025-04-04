@@ -1,4 +1,8 @@
 #!/bin/bash
+# Category: Utilities
+# A simple wrapper script for fast Git commits and pushes.
+# - Prompts for a commit message (or uses "Update" by default)
+# - Adds and pushes all modified files
 
 cd "$(dirname "$0")/.."
 

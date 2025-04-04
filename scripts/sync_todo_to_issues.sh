@@ -5,13 +5,14 @@ cd "$(dirname "$0")/.."
 REPO="lzspace/Athena"
 TODO_FILE="TODO.md"
 
+# Define valid labels
 valid_labels=("future" "ai" "planning" "productivity" "work" "personal" "science" "unknown")
 
 echo "🔄 Syncing TODO.md with GitHub Issues..."
 
 current_label="unknown"
 
-# Helper to validate labels
+# Helper: Check if a label is valid
 is_valid_label() {
   for label in "${valid_labels[@]}"; do
     [[ "$1" == "$label" ]] && return 0
@@ -19,13 +20,24 @@ is_valid_label() {
   return 1
 }
 
+# Get existing issue titles to avoid duplicates
+existing_issues=$(gh issue list -R "$REPO" --state open --limit 100 --json title | jq -r '.[].title')
+
 while IFS= read -r line || [[ -n $line ]]; do
   # Skip empty lines
-  [[ -z "$line" ]] && continue
+  if [[ -z "$line" ]]; then
+    continue
+  fi
 
   # Section headers → labels
   if [[ "$line" == \#\#* ]]; then
-    raw=$(echo "$line" | sed -E 's/#+\s+//; s/[🌌🌍🧠📅🎯💡🚀]//g; s/[^a-zA-Z0-9]/_/g' | tr '[:upper:]' '[:lower:]')
+    raw=$(echo "$line" \
+        | sed -E 's/#+\s+//' \
+        | iconv -c -f utf8 -t ascii //TRANSLIT \
+        | sed -E 's/[^a-zA-Z0-9]+/_/g' \
+        | tr '[:upper:]' '[:lower:]' \
+        | sed -E 's/^_+|_+$//g')
+        
     if is_valid_label "$raw"; then
       current_label="$raw"
     else
@@ -34,12 +46,12 @@ while IFS= read -r line || [[ -n $line ]]; do
     continue
   fi
 
-  # Unchecked task
-    if [[ "$line" == "- [ ]"* ]]; then
+  # Match unchecked tasks
+  if [[ "$line" == "- [ ]"* ]]; then
     title=$(echo "$line" | sed -E 's/- \[ \] //')
 
-    # Check for existing issue
-    if gh issue list -R "$REPO" --limit 100 | grep -q "$title"; then
+    # Check if title already exists exactly
+    if echo "$existing_issues" | grep -Fxq "$title"; then
       echo "⚠️  Issue already exists: $title"
     else
       echo "➕ Creating issue: $title [label: $current_label]"
