@@ -1,0 +1,12 @@
+# model files and caches
+models/
+__pycache__/
+*.bin
+*.gguf
+
+# audio recordings
+audio/*.wav
+
+# local logs and data
+*.log
+data/*
