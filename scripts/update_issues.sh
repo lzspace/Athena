@@ -3,6 +3,7 @@
 # Description: Updates GitHub Issues with metadata and correct labels from TODO.md.
 # Details:
 # - Adds description, @due(...) dates, @prio(...) and @label(...) overrides
+# - Supports @milestone(...) to assign issues to GitHub milestones
 # - Replaces 'unknown' label with parsed section or explicit tag
 # - Closes GitHub issues if matching TODO is marked as completed and --close-done is passed
 
@@ -37,6 +38,7 @@ description=""
 due=""
 priority=""
 custom_label=""
+milestone=""
 done=false
 collect_description=false
 
@@ -58,7 +60,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
 
   if [[ "$line" == "- [ ]"* ]]; then
     if [[ -n "$title" ]]; then
-      issue_number=$(gh issue list -R "$REPO" --state open --json title,number | jq -r --arg TITLE "$title" '.[] | select(.title == $TITLE) | .number')
+      issue_number=$(gh issue list -R "$REPO" --state open --json title,number | jq -r --arg TITLE "$(echo "$title" | tr '[:upper:]' '[:lower:]' | sed 's/[[:space:]]//g')" '.[] | select(.title | ascii_downcase | gsub("[[:space:]]"; "") == $TITLE) | .number')
       if [[ -n "$issue_number" ]]; then
         if $done && $CLOSE_DONE; then
           echo "✅ Closing issue #$issue_number for completed task"
@@ -70,7 +72,9 @@ while IFS= read -r line || [[ -n "$line" ]]; do
           [[ -n "$priority" ]] && full_body+=$'\n🔹 Priority: '$priority
 
           final_label="$current_label"
-          [[ -n "$custom_label" && $(is_valid_label "$custom_label" && echo true) == true ]] && final_label="$custom_label"
+          if [[ -n "$custom_label" ]] && is_valid_label "$custom_label"; then
+            final_label="$custom_label"
+          fi
 
           gh issue edit "$issue_number" -R "$REPO" \
             --body "$full_body" \
@@ -81,6 +85,13 @@ while IFS= read -r line || [[ -n "$line" ]]; do
             label="priority_${priority}"
             label=$(echo "$label" | tr '[:upper:]' '[:lower:]')
             gh issue edit "$issue_number" -R "$REPO" --add-label "$label"
+          fi
+
+          if [[ -n "$milestone" ]]; then
+            milestone_number=$(gh api repos/$REPO/milestones --jq ".[] | select(.title == \"$milestone\") | .number")
+            if [[ -n "$milestone_number" ]]; then
+              gh issue edit "$issue_number" -R "$REPO" --milestone "$milestone_number"
+            fi
           fi
         fi
       else
@@ -93,6 +104,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     due=""
     priority=""
     custom_label=""
+    milestone=""
     collect_description=true
     continue
   fi
@@ -104,6 +116,8 @@ while IFS= read -r line || [[ -n "$line" ]]; do
       priority=$(echo "$line" | sed -nE 's/.*@prio\(([^)]+)\).*/\1/p')
     elif [[ "$line" == *"@label("* ]]; then
       custom_label=$(echo "$line" | sed -nE 's/.*@label\(([^)]+)\).*/\1/p')
+    elif [[ "$line" == *"@milestone("* ]]; then
+      milestone=$(echo "$line" | sed -nE 's/.*@milestone\(([^)]+)\).*/\1/p')
     elif [[ "$line" == "- [ ]"* ]]; then
       collect_description=false
     else
