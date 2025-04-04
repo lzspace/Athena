@@ -1,27 +1,44 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 cd "$(dirname "$0")/.."
 
-REPO="luisziegler/Athena"
+REPO="lzspace/Athena"
 TODO_FILE="TODO.md"
+
+valid_labels=("future" "ai" "planning" "productivity" "work" "personal" "science" "unknown")
 
 echo "🔄 Syncing TODO.md with GitHub Issues..."
 
-# Store current section (e.g. ## Future Ideas)
-current_label="general"
+current_label="unknown"
 
-while IFS= read -r line; do
-  # Detect headers and convert them to labels (e.g., ## 🌌 Future Ideas → future)
-  if [[ $line == ##* ]]; then
-    current_label=$(echo "$line" | sed -E 's/#+\s+//; s/[🌌🌍🧠📅🎯💡]//g; s/[^a-zA-Z0-9]/_/g' | tr '[:upper:]' '[:lower:]')
+# Helper to validate labels
+is_valid_label() {
+  for label in "${valid_labels[@]}"; do
+    [[ "$1" == "$label" ]] && return 0
+  done
+  return 1
+}
+
+while IFS= read -r line || [[ -n $line ]]; do
+  # Skip empty lines
+  [[ -z "$line" ]] && continue
+
+  # Section headers → labels
+  if [[ "$line" == \#\#* ]]; then
+    raw=$(echo "$line" | sed -E 's/#+\s+//; s/[🌌🌍🧠📅🎯💡🚀]//g; s/[^a-zA-Z0-9]/_/g' | tr '[:upper:]' '[:lower:]')
+    if is_valid_label "$raw"; then
+      current_label="$raw"
+    else
+      current_label="unknown"
+    fi
     continue
   fi
 
-  # Match unchecked tasks
-  if [[ $line =~ ^- \[ \] ]]; then
+  # Unchecked task
+    if [[ "$line" == "- [ ]"* ]]; then
     title=$(echo "$line" | sed -E 's/- \[ \] //')
 
-    # Check if the issue already exists
+    # Check for existing issue
     if gh issue list -R "$REPO" --limit 100 | grep -q "$title"; then
       echo "⚠️  Issue already exists: $title"
     else
