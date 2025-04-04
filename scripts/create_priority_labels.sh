@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Category: Project Admin
+# Description: Creates GitHub labels for task priority.
 # Creates priority labels: priority_high, priority_medium, priority_low.
 # - Used for visual task triage
 # - Labels are applied automatically when @prio(...) is found

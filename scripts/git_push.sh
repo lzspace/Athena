@@ -1,5 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Category: Utilities
+# Description: Fast Git commit and push script. With pre-commit checks.
 # A simple wrapper script for fast Git commits and pushes.
 # - Prompts for a commit message (or uses "Update" by default)
 # - Adds and pushes all modified files
@@ -18,4 +19,3 @@ git push origin main
 
 echo "✅ Push complete!"
 
-906D-3F01

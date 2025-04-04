@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Category: Project Admin
+# Description: Creates GitHub labels for category organization.
+
 
 cd "$(dirname "$0")/.."
 
@@ -7,7 +10,11 @@ REPO="lzspace/Athena"
 echo "🏷️ Creating GitHub labels..."
 
 # Label name → description pairs
-label_names=("ai" "future" "planning" "science" "work" "personal" "productivity" "unknown")
+valid_labels=(
+  "future" "ai" "planning" "productivity" "work" "personal" "science" "test"
+  "testing_validation" "assistant_core_planning" "unknown"
+  "priority_high" "priority_medium" "priority_low"
+)
 label_descriptions=(
   "AI-related tasks"
   "Planned or conceptual ideas"

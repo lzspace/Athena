@@ -1,62 +1,98 @@
 # 🧠 Athena Assistant Script Cheatsheet
 
-This file is generated from script headers in `scripts/`.
+This file is dynamically generated from script metadata.
 
-## 🔧 `create_labels.sh`
-!/usr/bin/env bash
+## 🔷 Issue Sync
 
-```bash
-bash scripts/create_labels.sh
-```
-
-## 🔧 `create_priority_labels.sh`
-!/usr/bin/env bash
- Category: Project Admin
- Creates priority labels: priority_high, priority_medium, priority_low.
- - Used for visual task triage
- - Labels are applied automatically when @prio(...) is found
-
-```bash
-bash scripts/create_priority_labels.sh
-```
-
-## 🔧 `generate_cheatsheet.sh`
-!/usr/bin/env bash
- Creates GitHub Issues from unchecked TODOs in TODO.md
- Avoids duplicates and labels based on section headers
- Run this after adding new TODOs
-
-```bash
-bash scripts/generate_cheatsheet.sh
-```
-
-## 🔧 `git_push.sh`
-!/bin/bash
- Category: Utilities
- A simple wrapper script for fast Git commits and pushes.
- - Prompts for a commit message (or uses "Update" by default)
- - Adds and pushes all modified files
-
-```bash
-bash scripts/git_push.sh
-```
-
-## 🔧 `sync_todo_to_issues.sh`
-!/usr/bin/env bash
+### 🔧 `sync_todo_to_issues.sh`
 
 ```bash
 bash scripts/sync_todo_to_issues.sh
 ```
 
-## 🔧 `update_issue_labels.sh`
-!/usr/bin/env bash
- Category: Issue Sync
- Updates existing GitHub Issues with rich metadata from TODO.md.
- - Adds description, @due(...) date, and @prio(...) priority tag
- - Replaces the "unknown" label with proper category
- - Use after editing existing TODOs with more info
+**Category:** Issue Sync  
+**Description:** Creates GitHub Issues from TODO.md entries.
+
+- Avoids duplicates by checking existing issue titles
+- Applies labels based on section headers or @label() tag
+
+### 🔧 `update_issues.sh`
 
 ```bash
-bash scripts/update_issue_labels.sh
+bash scripts/update_issues.sh
 ```
 
+**Category:** Issue Sync  
+**Description:** Updates GitHub Issues with metadata and correct labels from TODO.md.
+
+- Adds description, @due(...) dates, @prio(...) and @label(...) overrides
+- Replaces 'unknown' label with parsed section or explicit tag
+
+---
+
+## 🔷 Project Admin
+
+### 🔧 `create_labels.sh`
+
+```bash
+bash scripts/create_labels.sh
+```
+
+**Category:** Project Admin  
+**Description:** Creates your core category labels on GitHub.
+
+- Skips labels that already exist
+- Used for section-based labeling of issues
+
+### 🔧 `create_priority_labels.sh`
+
+```bash
+bash scripts/create_priority_labels.sh
+```
+
+**Category:** Project Admin  
+**Description:** Creates priority labels (high, medium, low) on GitHub.
+
+- Supports label-based priority tagging via @prio(...) in TODO.md
+
+---
+
+## 🔷 Utilities
+
+### 🔧 `generate_cheatsheet.py`
+
+```bash
+python3 scripts/generate_cheatsheet.py
+```
+
+**Category:** Utilities  
+**Description:** Dynamically generates CHEATSHEET.md from script metadata.
+
+- Reads category, description, and details blocks
+- Groups output by category
+
+### 🔧 `git_push.sh`
+
+```bash
+bash scripts/git_push.sh
+```
+
+**Category:** Utilities  
+**Description:** Simple wrapper script for Git add, commit and push.
+
+- Prompts for commit message or uses 'Update'
+- Stashes, commits, and pushes all changes
+
+### 🔧 `test_headers.sh`
+
+```bash
+bash scripts/test_headers.sh
+```
+
+**Category:** Utilities  
+**Description:** Validates that all Athena scripts have required documentation headers.
+
+- Checks for shebang, Category, and Description fields
+- Flags missing headers with line numbers
+
+---
