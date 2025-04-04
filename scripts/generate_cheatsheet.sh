@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# Creates GitHub Issues from unchecked TODOs in TODO.md
-# Avoids duplicates and labels based on section headers
-# Run this after adding new TODOs
 
 cd "$(dirname "$0")/.."
 
@@ -10,32 +7,40 @@ SCRIPTS_DIR="scripts"
 
 echo "# 🧠 Athena Assistant Script Cheatsheet" > "$OUT_FILE"
 echo "" >> "$OUT_FILE"
-echo "This file is generated from script headers in \`$SCRIPTS_DIR/\`." >> "$OUT_FILE"
+echo "This file is dynamically generated from script headers in \`$SCRIPTS_DIR/\`." >> "$OUT_FILE"
 echo "" >> "$OUT_FILE"
+
+# Collect categories and script info
+declare -A grouped
 
 for script in "$SCRIPTS_DIR"/*.sh; do
   [[ -f "$script" ]] || continue
 
   title=$(basename "$script")
-  echo "## 🔧 \`$title\`" >> "$OUT_FILE"
+  category="Uncategorized"
+  command="bash $script"
+  description=""
 
-  # Read doc comments (first consecutive lines starting with #)
-  description_block=""
+  # Read script header
   while IFS= read -r line; do
-    if [[ "$line" =~ ^\# ]]; then
-      stripped=$(echo "$line" | sed 's/^#\s*//')
-      description_block+="$stripped"$'\n'
+    [[ -z "$line" ]] && break
+    if [[ "$line" == \#\ Category:* ]]; then
+      category=$(echo "$line" | sed 's/# Category: //')
+    elif [[ "$line" == \#* ]]; then
+      description+="${line#\# }"$'\n'
     else
       break
     fi
   done < "$script"
 
-  echo "$description_block" >> "$OUT_FILE"
-
-  echo '```bash' >> "$OUT_FILE"
-  echo "bash $script" >> "$OUT_FILE"
-  echo '```' >> "$OUT_FILE"
-  echo "" >> "$OUT_FILE"
+  grouped["$category"]+=$'\n'"## 🔧 \`$title\`"$'\n\n'"```bash"$'\n'"$command"$'\n'"```"$'\n\n'"**Category:** $category"$'\n'"$description"$'\n'"---"$'\n'
 done
 
-echo "✅ Generated $OUT_FILE"
+# Print categories in preferred order
+categories=("Issue Sync" "Project Admin" "Utilities" "DevOps" "Assistant Core" "Uncategorized")
+
+for cat in "${categories[@]}"; do
+  [[ -n "${grouped[$cat]}" ]] && echo "## 🔷 $cat" >> "$OUT_FILE" && echo "${grouped[$cat]}" >> "$OUT_FILE"
+done
+
+echo "✅ Cheatsheet generated: $OUT_FILE"

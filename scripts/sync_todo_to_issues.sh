@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# Category: Issue Sync
+# Syncs unchecked tasks from TODO.md to GitHub Issues.
+# - Avoids duplicate issues by exact title match
+# - Assigns a section-based label (e.g. "productivity", "ai")
+# - Use this after adding new tasks to your TODO list
 
 cd "$(dirname "$0")/.."
 
@@ -31,21 +36,21 @@ while IFS= read -r line || [[ -n $line ]]; do
 
   # Section headers → labels
   if [[ "$line" == \#\#* ]]; then
-    raw=$(echo "$line" \
-        | sed -E 's/#+\s+//' \
-        | iconv -c -f utf8 -t ascii //TRANSLIT \
-        | sed -E 's/[^a-zA-Z0-9]+/_/g' \
-        | tr '[:upper:]' '[:lower:]' \
-        | sed -E 's/^_+|_+$//g')
-        
-    if is_valid_label "$raw"; then
-      current_label="$raw"
-    else
-      current_label="unknown"
-    fi
-    continue
-  fi
+ raw=$(echo "$line" \
+  | sed -E 's/#+\s+//' \
+  | sed -E 's/[^a-zA-Z0-9]+/_/g' \
+  | tr '[:upper:]' '[:lower:]' \
+  | sed -E 's/^_+|_+$//g')
 
+# Add this debug line if you like
+# echo "→ Raw section label: $raw"
+
+if is_valid_label "$raw"; then
+  current_label="$raw"
+else
+  current_label="unknown"
+fi
+echo "→ Section: '$line' → Label: '$current_label'"
   # Match unchecked tasks
   if [[ "$line" == "- [ ]"* ]]; then
     title=$(echo "$line" | sed -E 's/- \[ \] //')
