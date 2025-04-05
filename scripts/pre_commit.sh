@@ -28,6 +28,12 @@ export PYTHONPATH=$(pwd)
 
 # Run tests in all subdirectories under tests/
 echo "🔍 Running tests..."
+<<<<<<< HEAD
 # pytest tests/ --disable-warnings
 
 echo "✅ All tests passed."
+=======
+pytest tests/ --disable-warnings
+
+echo "✅ All tests passed."
+>>>>>>> 7efa79d (cleaned and refactored, added more tests)

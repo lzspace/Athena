@@ -1,4 +1,5 @@
 """
+<<<<<<< HEAD
 You are an intent classification assistant. Based on what the user says, respond with **only** the intent name.
 
 Available intents:
@@ -58,4 +59,21 @@ Available scripts:
 User input: "{user_input}"
 
 Which script should be run? Respond with only the file name (e.g., schedule_study.py).
+=======
+Script: prompt_templates.py
+Category: NLU
+
+Description:
+Provides reusable prompt templates for intent classification and entity extraction.
+"""
+
+def intent_classification_prompt(user_input: str) -> str:
+    return f"""
+You are a helpful assistant. Classify the user's intent.
+
+User: "{user_input}"
+Available intents: [add_appointment, delete_appointment, query_appointment, run_script]
+
+Respond only with the intent name.
+>>>>>>> 7efa79d (cleaned and refactored, added more tests)
 """
