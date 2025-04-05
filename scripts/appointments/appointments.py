@@ -17,6 +17,12 @@ import sys
 import datetime
 import dateparser
 
+settings = {
+    'TIMEZONE': 'UTC',
+    'RETURN_AS_TIMEZONE_AWARE': True,
+    'RELATIVE_BASE': datetime.now(tz=timezone.utc)  # or a local time base
+}
+
 DB_PATH = "appointments.db"
 
 CREATE_TABLE_SQL = """
@@ -44,11 +50,14 @@ def init_db():
 #  Helper: parse_date() with dateparser
 # ----------------------------------------------------
 def parse_date(date_str):
-    """Parse a natural language date/time string into DB-friendly 'YYYY-MM-DD HH:MM:SS'."""
     dt = dateparser.parse(date_str)
     if not dt:
-        raise ValueError(f"Could not parse date/time from '{date_str}'. Try a more standard format.")
-    return dt.strftime("%Y-%m-%d %H:%M:%S")
+        raise ValueError(f"Could not parse date/time from '{date_str}'.")
+
+    # Convert from whatever dateparser guesses (often local time) to UTC
+    utc_dt = dt.astimezone(datetime.timezone.utc)
+
+    return utc_dt.strftime("%Y-%m-%d %H:%M:%S")
 
 # ----------------------------------------------------
 #  Conflict Checking
