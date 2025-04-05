@@ -4,10 +4,10 @@ import sqlite3
 import datetime
 from pathlib import Path
 
+
 # Adjust import if your appointments.py is in scripts/appointments/:
 # e.g. from scripts.appointments.appointments import ...
-from scripts.appointments.appointments import (
-    DB_PATH,
+from assistant_core.modules.appointments.domain import (
     CREATE_TABLE_SQL,
     init_db,
     create_appointment,
@@ -15,7 +15,7 @@ from scripts.appointments.appointments import (
     get_appointment_by_id,
     update_appointment,
     delete_appointment,
-    has_conflict
+    has_conflict,
 )
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def temp_db(monkeypatch):
     temp_path = "test_appointments.db"
 
     # Patch the DB_PATH global variable to the temp file:
-    monkeypatch.setattr("scripts.appointments.appointments.DB_PATH", temp_path)
+    monkeypatch.setattr("assistant_core.modules.appointments.domain.DB_PATH", temp_path)
 
     # Initialize the table:
     init_db()
