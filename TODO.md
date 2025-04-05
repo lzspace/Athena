@@ -79,3 +79,30 @@
 - [ ] Build a smart task categorizer (LLM-assisted)  
   Automatically suggests label and priority from task text.  
   @prio(medium) @label(assistant) @milestone(Assistant :: LLM Integration)
+
+
+  ## 🏷 Personal: Appointments
+
+- [ ] Set up a local SQLite database for appointments  
+  Initialize a new `appointments.db` (or reuse an existing DB).  
+  @prio(high) @label(personal) @milestone(Personal :: Appointments)
+
+- [ ] Create an `appointments` table with columns (id, title, start_time, end_time, location, description, created_at, updated_at)  
+  Store essential appointment info in SQLite for quick retrieval.  
+  @prio(high) @label(personal) @milestone(Personal :: Appointments)
+
+- [ ] Implement a Python module `appointments.py` with basic CRUD  
+  `create_appointment`, `list_appointments`, `get_appointment_by_id`, `update_appointment`, `delete_appointment`.  
+  @prio(medium) @label(personal) @milestone(Personal :: Appointments)
+
+- [ ] Write tests for appointment CRUD  
+  Use either Python’s `unittest` or `pytest` for verifying DB reads/writes.  
+  @prio(medium) @label(personal) @milestone(Personal :: Appointments)
+
+- [ ] Explore AI-based scheduling approach  
+  Integrate dateparser, conflict detection, or GPT-based suggestions to find free times.  
+  @prio(low) @label(personal) @milestone(Personal :: Appointments)
+
+- [ ] Optional: Plan future calendar sync (Google, Android)  
+  For direct or partial synchronization with external calendars.  
+  @prio(low) @label(personal) @milestone(Personal :: Appointments)
