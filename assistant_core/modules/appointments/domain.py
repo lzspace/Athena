@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """
-appointments.py
+domain.py (for appointments)
 
-Enhanced with:
-- dateparser for natural language input of start/end times
-- conflict detection to prevent overlapping appointments
+Provides the low-level appointment logic:
+- SQLite DB
+- dateparser
+- conflict checks
+- CRUD operations
 
-Run `python3 appointments.py init` to create the DB/table.
-
-Example usage:
-  python3 appointments.py create "Dentist visit" "tomorrow at 9am" "tomorrow at 10am"
+Used by handlers.py for higher-level logic in the assistant.
 """
 
 import sqlite3
@@ -17,10 +16,11 @@ import sys
 import datetime
 import dateparser
 
-settings = {
+# If you want consistent dateparser settings for "tomorrow", use this:
+parser_settings = {
     'TIMEZONE': 'UTC',
-    'RETURN_AS_TIMEZONE_AWARE': True,
-    'RELATIVE_BASE': datetime.now(tz=timezone.utc)  # or a local time base
+    'RETURN_AS_TIMEZONE_AWARE': False,
+    'RELATIVE_BASE': datetime.datetime.now(datetime.timezone.utc)
 }
 
 DB_PATH = "appointments.db"
@@ -42,81 +42,73 @@ def get_connection():
     return sqlite3.connect(DB_PATH)
 
 def init_db():
+    """Create the 'appointments' table if it doesn't exist."""
     with get_connection() as conn:
         conn.execute(CREATE_TABLE_SQL)
     print(f"Database '{DB_PATH}' initialized with 'appointments' table.")
 
-# ----------------------------------------------------
-#  Helper: parse_date() with dateparser
-# ----------------------------------------------------
-def parse_date(date_str):
-    dt = dateparser.parse(date_str)
+def parse_date(date_str: str) -> str:
+    """
+    Use dateparser to interpret date_str (e.g. 'tomorrow 9am').
+    Convert to UTC-based naive string: 'YYYY-MM-DD HH:MM:SS'.
+    """
+    if not date_str:
+        return ""
+    dt = dateparser.parse(date_str, settings=parser_settings)
     if not dt:
         raise ValueError(f"Could not parse date/time from '{date_str}'.")
-
-    # Convert from whatever dateparser guesses (often local time) to UTC
+    # Convert to UTC
     utc_dt = dt.astimezone(datetime.timezone.utc)
-
     return utc_dt.strftime("%Y-%m-%d %H:%M:%S")
 
-# ----------------------------------------------------
-#  Conflict Checking
-# ----------------------------------------------------
-def has_conflict(new_start, new_end, exclude_id=None):
-    """
-    Checks if there's an existing appointment that overlaps with
-    the proposed [new_start, new_end) range.
-
-    exclude_id: if given, ignore that appointment ID (for updates).
-    """
+# -------------------
+# Conflict Checking
+# -------------------
+def has_conflict(new_start, new_end, exclude_id=None) -> bool:
+    """Return True if an existing appointment overlaps [new_start, new_end)."""
     with get_connection() as conn:
         cur = conn.cursor()
         sql = """
             SELECT COUNT(*) FROM appointments
-            WHERE
-              -- overlap condition:
-              NOT (
+            WHERE NOT (
                 end_time <= :newStart
                 OR
                 start_time >= :newEnd
-              )
+            )
         """
-        params = {
-            "newStart": new_start,
-            "newEnd": new_end
-        }
+        params = {"newStart": new_start, "newEnd": new_end}
         if exclude_id:
             sql += " AND id != :excludeId"
             params["excludeId"] = exclude_id
 
         cur.execute(sql, params)
         (count,) = cur.fetchone()
-        return count > 0  # True if any overlapping row found
+        return count > 0
 
-# ----------------------------------------------------
-#  CRUD (with conflict check on create/update)
-# ----------------------------------------------------
-def create_appointment(title, start_time_str, end_time_str, location=None, description=None, ignore_conflict=False):
+# -------------------
+# CRUD
+# -------------------
+def create_appointment(title, start_time_str, end_time_str,
+                       location=None, description=None,
+                       ignore_conflict=False):
     """
     Insert a new appointment. Returns the new ID.
-    - start_time_str, end_time_str are parsed with dateparser
-    - If ignore_conflict=False, raise an Exception if a conflict is found.
     """
     start_time = parse_date(start_time_str)
-    end_time = parse_date(end_time_str)
+    end_time   = parse_date(end_time_str)
 
-    # basic sanity check
-    if end_time <= start_time:
+    if end_time and start_time and end_time <= start_time:
         raise ValueError("end_time must be after start_time")
 
-    if not ignore_conflict and has_conflict(start_time, end_time):
-        raise ValueError(f"Conflict detected with an existing appointment between {start_time} and {end_time}")
+    if not ignore_conflict and start_time and end_time:
+        if has_conflict(start_time, end_time):
+            raise ValueError(f"Conflict detected with existing appointments between {start_time} and {end_time}")
 
     with get_connection() as conn:
         cur = conn.cursor()
         cur.execute("""
             INSERT INTO appointments (title, start_time, end_time, location, description)
-            VALUES (?, ?, ?, ?, ?);
+            VALUES (?, ?, ?, ?, ?)
         """, (title, start_time, end_time, location, description))
         conn.commit()
         return cur.lastrowid
@@ -125,7 +117,7 @@ def list_appointments(upcoming_only=False):
     with get_connection() as conn:
         cur = conn.cursor()
         if upcoming_only:
-            now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            now_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
             cur.execute("""
                 SELECT id, title, start_time, end_time, location, description, created_at, updated_at
                 FROM appointments
@@ -150,16 +142,14 @@ def get_appointment_by_id(appointment_id):
         """, (appointment_id,))
         return cur.fetchone()
 
-def update_appointment(appointment_id, title=None, start_time_str=None, end_time_str=None,
-                       location=None, description=None, ignore_conflict=False):
-    """
-    Update fields of an existing appointment. 
-    - start_time_str, end_time_str are parsed with dateparser if given.
-    - If ignore_conflict=False, raise an Exception if conflict is found.
-
-    Returns True if update succeeded, False if no rows were updated.
-    """
-    # fetch existing
+def update_appointment(appointment_id,
+                       title=None,
+                       start_time_str=None,
+                       end_time_str=None,
+                       location=None,
+                       description=None,
+                       ignore_conflict=False):
+    """Update an existing appointment's fields. Returns True if updated."""
     existing = get_appointment_by_id(appointment_id)
     if not existing:
         raise ValueError(f"Appointment {appointment_id} not found")
@@ -168,37 +158,24 @@ def update_appointment(appointment_id, title=None, start_time_str=None, end_time
 
     new_title = title if title is not None else old_title
     new_start = parse_date(start_time_str) if start_time_str else old_start
-    new_end = parse_date(end_time_str) if end_time_str else old_end
+    new_end   = parse_date(end_time_str)   if end_time_str   else old_end
 
     # check conflict
-    if not ignore_conflict and has_conflict(new_start, new_end, exclude_id=appointment_id):
-        raise ValueError(f"Conflict detected updating appointment {appointment_id}")
+    if not ignore_conflict and new_start and new_end:
+        if has_conflict(new_start, new_end, exclude_id=appointment_id):
+            raise ValueError(f"Conflict detected updating appointment {appointment_id}")
 
-    # For updated_at:
-    updated_at = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    updated_at = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
-    fields = []
-    params = []
-
-    fields.append("title=?")
-    params.append(new_title)
-
-    fields.append("start_time=?")
-    params.append(new_start)
-
-    fields.append("end_time=?")
-    params.append(new_end)
+    fields = ["title=?", "start_time=?", "end_time=?", "updated_at=?"]
+    params = [new_title, new_start, new_end, updated_at]
 
     if location is not None:
         fields.append("location=?")
         params.append(location)
-
     if description is not None:
         fields.append("description=?")
         params.append(description)
-
-    fields.append("updated_at=?")
-    params.append(updated_at)
 
     sql = f"UPDATE appointments SET {', '.join(fields)} WHERE id=?"
     params.append(appointment_id)
@@ -216,17 +193,18 @@ def delete_appointment(appointment_id):
         conn.commit()
         return res.rowcount > 0
 
-# ----------------------------------------------------
-#  CLI
-# ----------------------------------------------------
+# ---------------------------------------
+# CLI usage for direct domain testing
+# ---------------------------------------
 def usage():
     print("Usage:")
-    print("  python3 appointments.py init")
-    print("  python3 appointments.py list [--upcoming]")
-    print('  python3 appointments.py create "Title" "start" "end" [--ignore-conflict]')
-    print("  python3 appointments.py delete <id>")
+    print("  python3 domain.py init")
+    print("  python3 domain.py list [--upcoming]")
+    print('  python3 domain.py create "Title" "start" "end" [--ignore-conflict]')
+    print("  python3 domain.py delete <id>")
 
 if __name__ == "__main__":
+    # optional CLI interface for quick testing
     if len(sys.argv) < 2:
         usage()
         sys.exit(1)
@@ -237,9 +215,7 @@ if __name__ == "__main__":
         init_db()
 
     elif cmd == "list":
-        upcoming = False
-        if len(sys.argv) > 2 and sys.argv[2] == "--upcoming":
-            upcoming = True
+        upcoming = "--upcoming" in sys.argv
         rows = list_appointments(upcoming_only=upcoming)
         for row in rows:
             print(row)
@@ -251,11 +227,7 @@ if __name__ == "__main__":
         title = sys.argv[2]
         start_str = sys.argv[3]
         end_str = sys.argv[4]
-        # Optional: --ignore-conflict
-        ignore_conflict = False
-        if "--ignore-conflict" in sys.argv:
-            ignore_conflict = True
-
+        ignore_conflict = "--ignore-conflict" in sys.argv
         try:
             appt_id = create_appointment(title, start_str, end_str, ignore_conflict=ignore_conflict)
             print(f"Created appointment id {appt_id}")

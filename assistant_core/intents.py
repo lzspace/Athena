@@ -9,6 +9,7 @@ An expanded approach that:
 
 import re
 import dateparser
+from datetime import datetime, timezone
 
 def parse_intent(user_text: str) -> dict:
     text_lower = user_text.lower()
@@ -51,13 +52,20 @@ def parse_time_range(user_text: str) -> dict:
     Attempt to parse a time range from user_text like "tomorrow from 9 to 10."
     Return a dict with start_time_str, end_time_str if found, or single time if not found.
     """
+    # We'll define dateparser settings so it knows to treat "tomorrow" etc. in UTC
+    parser_settings = {
+        "TIMEZONE": "UTC",
+        "RETURN_AS_TIMEZONE_AWARE": False,  # or True if you prefer
+        "RELATIVE_BASE": datetime.now(timezone.utc)
+    }
+
     # naive approach: look for "from X to Y"
     match = re.search(r"from\s+(.*?)\s+to\s+(\S+)", user_text.lower())
     if match:
         raw_start = match.group(1)
         raw_end = match.group(2)
-        start_parsed = dateparser.parse(raw_start)
-        end_parsed = dateparser.parse(raw_end)
+        start_parsed = dateparser.parse(raw_start, settings=parser_settings)
+        end_parsed = dateparser.parse(raw_end, settings=parser_settings)
         start_str = start_parsed.strftime("%Y-%m-%d %H:%M:%S") if start_parsed else ""
         end_str = end_parsed.strftime("%Y-%m-%d %H:%M:%S") if end_parsed else ""
         return {
@@ -66,7 +74,7 @@ def parse_time_range(user_text: str) -> dict:
         }
 
     # fallback: parse a single time from entire text
-    dt = dateparser.parse(user_text)
+    dt = dateparser.parse(user_text, settings=parser_settings)
     time_str = dt.strftime("%Y-%m-%d %H:%M:%S") if dt else ""
     return {
         "start_time_str": time_str,
@@ -86,3 +94,4 @@ def extract_title(user_text: str, times_dict: dict) -> str:
     if times_dict.get("end_time_str"):
         text_clean = re.sub(times_dict["end_time_str"], "", text_clean, flags=re.IGNORECASE)
     return text_clean.strip().title()
+

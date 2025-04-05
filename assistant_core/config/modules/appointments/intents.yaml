@@ -1,0 +1,24 @@
+intents:
+  example_intent:
+    description: "This is an example intent."
+    examples:
+      - "Example phrase 1"
+      - "Example phrase 2"
+  book_appointment:
+    description: "Intent to book an appointment."
+    examples:
+      - "I want to book an appointment."
+      - "Schedule a meeting for me."
+      - "Can you book a doctor appointment?"
+  cancel_appointment:
+    description: "Intent to cancel an appointment."
+    examples:
+      - "Cancel my appointment."
+      - "I need to cancel my meeting."
+      - "Can you remove my appointment?"
+  reschedule_appointment:
+    description: "Intent to reschedule an appointment."
+    examples:
+      - "Reschedule my appointment to tomorrow."
+      - "Change my meeting to next week."
+      - "Can you move my appointment to another time?"

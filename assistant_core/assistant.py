@@ -7,9 +7,13 @@ assistant.py
 - Also includes a 'build_assistant()' function to register appointment handlers.
 - Provides a simple command-line loop at the bottom for testing.
 """
+from assistant_core.modules.appointments.domain import init_db
+
+def build_assistant():
+    init_db()  # ensure the table is created
 
 from assistant_core.intent_parser import parse_intent
-from assistant_core.handlers.appointments import (
+from assistant_core.modules.appointments.handlers import (
     handle_create_appointment,
     handle_list_appointments,
     handle_update_appointment
