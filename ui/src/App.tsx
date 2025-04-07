@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutGrid, FolderKanban, Cpu, ListTodo, Puzzle } from "lucide-react";
-import SystemInfoPanel from "@/components/panels/__tests__/SystemInfoPanel.test";
+import SystemInfoPanel from "@/components/panels/SystemInfoPanel.tsx";
 
 export default function App() {
   const [isListening, setIsListening] = useState(false);

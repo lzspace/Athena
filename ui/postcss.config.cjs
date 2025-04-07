@@ -1,5 +1,5 @@
 // postcss.config.js
-import autoprefixer from 'autoprefixer';
+const autoprefixer = require('autoprefixer');
 
 module.exports = {
     plugins: {
