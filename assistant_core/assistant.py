@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+from dotenv import load_dotenv
+load_dotenv()
+
 """
 assistant.py
 
@@ -8,6 +11,8 @@ assistant.py
 - Provides a simple command-line loop at the bottom for testing.
 """
 from assistant_core.modules.appointments.domain import init_db
+
+
 
 def build_assistant():
     init_db()  # ensure the table is created

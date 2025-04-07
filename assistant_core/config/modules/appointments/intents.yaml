@@ -1,24 +1,44 @@
-intents:
-  example_intent:
-    description: "This is an example intent."
-    examples:
-      - "Example phrase 1"
-      - "Example phrase 2"
-  book_appointment:
-    description: "Intent to book an appointment."
-    examples:
-      - "I want to book an appointment."
-      - "Schedule a meeting for me."
-      - "Can you book a doctor appointment?"
-  cancel_appointment:
-    description: "Intent to cancel an appointment."
-    examples:
-      - "Cancel my appointment."
-      - "I need to cancel my meeting."
-      - "Can you remove my appointment?"
-  reschedule_appointment:
-    description: "Intent to reschedule an appointment."
-    examples:
-      - "Reschedule my appointment to tomorrow."
-      - "Change my meeting to next week."
-      - "Can you move my appointment to another time?"
+create_appointment:
+  synonyms:
+    - "create appointment"
+    - "schedule"
+    - "add appointment"
+    - "make appointment"
+    - "termin erstellen"
+    - "termin anlegen"
+    - "termin eintragen"
+    - "termin buchen"
+    - "neuen termin"
+    - "booking appointment"
+    - "book appointment"
+  fallback_title: "Ohne Titel"
+
+list_appointments:
+  synonyms:
+    - "list appointments"
+    - "show appointments"
+    - "upcoming"
+    - "zeige termine"
+    - "liste termine"
+    - "alle termine"
+    - "terminübersicht"
+    - "was steht an"
+
+update_appointment:
+  synonyms:
+    - "update appointment"
+    - "reschedule"
+    - "change appointment"
+    - "termin ändern"
+    - "termin verschieben"
+    - "termin neu planen"
+    - "zeit ändern"
+
+delete_appointment:
+  synonyms:
+    - "delete appointment"
+    - "remove appointment"
+    - "cancel appointment"
+    - "termin löschen"
+    - "termin entfernen"
+    - "termin absagen"

@@ -2,13 +2,15 @@
 
 import re
 import dateparser 
-from assistant_core.config.intents_config import load_intents
+import os
+import yaml
+from assistant_core.load_intents import load_all_intents
 from datetime import datetime, timedelta, timezone
 
 
 
 # Load the dictionary at module load, or you can do so in build_assistant()
-INTENT_DEFINITIONS = load_intents()
+INTENT_DEFINITIONS = load_all_intents()
 
 def parse_intent(user_text: str) -> dict:
     text_lower = user_text.lower()

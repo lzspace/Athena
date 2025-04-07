@@ -10,3 +10,10 @@ audio/*.wav
 # local logs and data
 *.log
 data/*
+
+
+# .env
+.env
+
+# Ollama model volume (local LLaMA model cache)
+ollama/.env

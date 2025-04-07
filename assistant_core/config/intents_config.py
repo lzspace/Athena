@@ -11,13 +11,17 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INTENTS_YAML_PATH = os.path.join(BASE_DIR, "modules", "appointments", "intents.yaml")
 
 def load_intents():
-    if not os.path.exists(INTENTS_YAML_PATH):
-        raise FileNotFoundError(
-            f"Intents configuration file not found at {INTENTS_YAML_PATH}. "
-            "Please ensure the file exists or provide a valid path."
-        )
-    with open(INTENTS_YAML_PATH, "r", encoding="utf-8") as f:
-        data = yaml.safe_load(f)
-    # data should look like: {"intents": {...}}
-    # Return the "intents" dict for convenience
-    return data["intents"]
+    all_intents = {}
+    modules_dir = os.path.join(BASE_DIR, "modules")
+
+    for module_name in os.listdir(modules_dir):
+        module_path = os.path.join(modules_dir, module_name)
+        if os.path.isdir(module_path):
+            intents_path = os.path.join(module_path, "intents.yaml")
+            if os.path.exists(intents_path):
+                with open(intents_path, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f)
+                    for intent, config in data.get("intents", {}).items():
+                        all_intents[intent] = config
+
+    return all_intents

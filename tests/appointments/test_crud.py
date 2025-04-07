@@ -13,17 +13,17 @@ from assistant_core.modules.appointments import domain
 
 
 # Shared in-memory connection
-test_conn = sqlite3.connect(":memory:")
+_shared_conn = sqlite3.connect(":memory:")
 
 def setup_function():
     # Patch the domain's connection function to always return our test conn
-    domain.get_connection = lambda: test_conn
+    domain.get_connection = lambda: _shared_conn
     domain.init_db()
 
 def teardown_function():
-    cur = test_conn.cursor()
+    cur = _shared_conn.cursor()
     cur.execute("DELETE FROM appointments")
-    test_conn.commit()
+    _shared_conn.commit()
 
 # Override the default DB path for testing
 TEST_DB = ":memory:"

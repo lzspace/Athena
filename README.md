@@ -1,0 +1,1 @@
+💡 Run docker exec -it ollama ollama pull llama2 after starting the container to download the model locally.

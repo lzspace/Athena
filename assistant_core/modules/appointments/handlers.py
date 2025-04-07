@@ -24,6 +24,8 @@ def handle_create_appointment(parsed_data: dict) -> str:
     - start_time_str (str)
     - end_time_str (str)
     """
+    if parsed_data.get("needs_clarification"):
+        return parsed_data["clarification_prompt"]
     title = parsed_data.get("title", "Untitled")
     start_str = parsed_data.get("start_time_str", "")
     end_str = parsed_data.get("end_time_str", "")
