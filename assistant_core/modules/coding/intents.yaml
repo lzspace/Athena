@@ -1,0 +1,7 @@
+create_script:
+  synonyms: ["create script", "generate code", "neues skript"]
+  fallback_title: "Neues Skript"
+update_script:
+  synonyms: ["update script", "skript aktualisieren"]
+list_scripts:
+  synonyms: ["list scripts", "skripte auflisten"]
